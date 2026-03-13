@@ -3,7 +3,7 @@
   "short_name": "Flags Quiz",
   "description": "Test your knowledge of world flags",
   "start_url": "./index.html",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#0a0a1a",
   "theme_color": "#0a0a1a",
   "icons": [

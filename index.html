@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Flags of the World Quiz</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0a0a1a">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="apple-touch-icon" href="3626838.png">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -20,6 +21,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
     body::before {
@@ -923,9 +925,45 @@ function loadQuestion() {
   });
 }
 
+// ─── Sound Effects (Web Audio API) ───
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playCorrectSound() {
+  const now = audioCtx.currentTime;
+  // Two-note chime: C5 → E5
+  [523.25, 659.25].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.18, now + i * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now + i * 0.12);
+    osc.stop(now + i * 0.12 + 0.4);
+  });
+}
+
+function playWrongSound() {
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(300, now);
+  osc.frequency.linearRampToValueAtTime(200, now + 0.25);
+  gain.gain.setValueAtTime(0.15, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 0.3);
+}
+
 function checkAnswer(btn, selected, correct) {
   if (answered) return;
   answered = true;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 
   const buttons = optionsDiv.querySelectorAll('.option-btn');
   buttons.forEach(b => b.disabled = true);
@@ -934,6 +972,7 @@ function checkAnswer(btn, selected, correct) {
     btn.classList.add('correct');
     flagContainer.classList.add('pop');
     score++;
+    playCorrectSound();
   } else {
     btn.classList.add('wrong');
     buttons.forEach(b => {
@@ -942,6 +981,7 @@ function checkAnswer(btn, selected, correct) {
     lives--;
     updateLives();
     flagContainer.classList.add('shake');
+    playWrongSound();
   }
 
   setTimeout(() => {
