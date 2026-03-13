@@ -9,7 +9,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="apple-touch-icon" href="3626838.png">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -381,7 +382,7 @@
       margin-bottom: 1rem;
     }
 
-    .back-btn, .quit-btn {
+    .back-btn, .sound-toggle {
       background: none;
       border: 1px solid #2a2a4a;
       border-radius: 10px;
@@ -394,7 +395,10 @@
     }
 
     .back-btn:hover { border-color: #818cf8; color: #818cf8; }
-    .quit-btn:hover { border-color: #ef4444; color: #ef4444; }
+    .sound-toggle { display: flex; align-items: center; justify-content: center; padding: 6px 10px; }
+    .sound-toggle:hover { border-color: #818cf8; color: #818cf8; }
+    .sound-toggle.muted { color: #ef4444; border-color: #ef4444; }
+    .sound-toggle.muted .sound-waves { display: none; }
 
     .game-header {
       display: flex;
@@ -712,7 +716,7 @@
     <div class="game-top-bar">
       <button class="back-btn" onclick="confirmQuit()">&#8592; Back</button>
       <span class="level-badge" id="levelBadge"></span>
-      <button class="quit-btn" onclick="confirmQuit()">Quit</button>
+      <button class="sound-toggle" id="soundToggle" onclick="toggleSound()"><svg id="soundIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path class="sound-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
     </div>
     <div class="game-header">
       <div class="lives" id="lives"></div>
@@ -890,6 +894,8 @@ function startGame(level) {
   levelBadge.textContent = level.charAt(0).toUpperCase() + level.slice(1);
   levelBadge.className = 'level-badge ' + level;
 
+  updateSoundBtn();
+
   updateLives();
   loadQuestion();
 }
@@ -926,7 +932,39 @@ function loadQuestion() {
 }
 
 // ─── Sound Effects (Web Audio API) ───
+let soundEnabled = localStorage.getItem('flags-sound') !== 'off';
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('flags-sound', soundEnabled ? 'on' : 'off');
+  updateSoundBtn();
+}
+
+function updateSoundBtn() {
+  const btn = document.getElementById('soundToggle');
+  btn.classList.toggle('muted', !soundEnabled);
+  const svg = btn.querySelector('svg');
+  const waves = svg.querySelector('.sound-waves');
+  if (!soundEnabled) {
+    if (waves) waves.style.display = 'none';
+    if (!svg.querySelector('.sound-x')) {
+      const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line1.setAttribute('class', 'sound-x');
+      line1.setAttribute('x1', '16'); line1.setAttribute('y1', '9');
+      line1.setAttribute('x2', '22'); line1.setAttribute('y2', '15');
+      const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line2.setAttribute('class', 'sound-x');
+      line2.setAttribute('x1', '22'); line2.setAttribute('y1', '9');
+      line2.setAttribute('x2', '16'); line2.setAttribute('y2', '15');
+      svg.appendChild(line1);
+      svg.appendChild(line2);
+    }
+  } else {
+    if (waves) waves.style.display = '';
+    svg.querySelectorAll('.sound-x').forEach(el => el.remove());
+  }
+}
 
 function playCorrectSound() {
   const now = audioCtx.currentTime;
@@ -972,7 +1010,7 @@ function checkAnswer(btn, selected, correct) {
     btn.classList.add('correct');
     flagContainer.classList.add('pop');
     score++;
-    playCorrectSound();
+    if (soundEnabled) playCorrectSound();
   } else {
     btn.classList.add('wrong');
     buttons.forEach(b => {
@@ -981,7 +1019,7 @@ function checkAnswer(btn, selected, correct) {
     lives--;
     updateLives();
     flagContainer.classList.add('shake');
-    playWrongSound();
+    if (soundEnabled) playWrongSound();
   }
 
   setTimeout(() => {

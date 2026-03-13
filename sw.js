@@ -1,9 +1,9 @@
-const CACHE_NAME = 'flags-quiz-v1';
+const CACHE_NAME = 'flags-quiz-v2';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './3626838.png'
+  './icon.svg'
 ];
 
 self.addEventListener('install', e => {

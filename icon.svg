@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0f0a2a"/>
+    </linearGradient>
+    <linearGradient id="globe" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="flag" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f472b6"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Globe circle -->
+  <circle cx="240" cy="275" r="140" fill="none" stroke="url(#globe)" stroke-width="12" opacity="0.9"/>
+  <!-- Globe horizontal lines -->
+  <ellipse cx="240" cy="275" rx="140" ry="50" fill="none" stroke="url(#globe)" stroke-width="8" opacity="0.5"/>
+  <ellipse cx="240" cy="275" rx="140" ry="100" fill="none" stroke="url(#globe)" stroke-width="8" opacity="0.35"/>
+  <!-- Globe vertical line -->
+  <ellipse cx="240" cy="275" rx="50" ry="140" fill="none" stroke="url(#globe)" stroke-width="8" opacity="0.5"/>
+  <!-- Globe center vertical -->
+  <line x1="240" y1="135" x2="240" y2="415" stroke="url(#globe)" stroke-width="8" opacity="0.35"/>
+  <!-- Globe center horizontal -->
+  <line x1="100" y1="275" x2="380" y2="275" stroke="url(#globe)" stroke-width="8" opacity="0.35"/>
+  <!-- Flag pole -->
+  <line x1="330" y1="100" x2="330" y2="300" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round"/>
+  <!-- Flag -->
+  <path d="M335 105 L430 105 Q440 105 440 115 L440 185 Q440 195 430 195 L335 195 Z" fill="url(#flag)" opacity="0.95"/>
+  <!-- Flag stripe -->
+  <rect x="335" y="135" width="105" height="25" fill="#ffffff" opacity="0.3" rx="2"/>
+  <!-- Question mark on flag -->
+  <text x="387" y="168" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="60" fill="white" opacity="0.95">?</text>
+  <!-- Small sparkles -->
+  <circle cx="140" cy="160" r="6" fill="#818cf8" opacity="0.6"/>
+  <circle cx="400" cy="350" r="5" fill="#f472b6" opacity="0.5"/>
+  <circle cx="120" cy="380" r="4" fill="#a78bfa" opacity="0.4"/>
+</svg>
