@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flags of the World Quiz</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0a1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="3626838.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0a0a1a;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(99,102,241,0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(236,72,153,0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 600px;
+      padding: 1.5rem;
+    }
+
+    /* Start Screen */
+    .start-screen { text-align: center; }
+
+    .hero-visual {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .globe {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #4f46e5, #1e1b4b 70%);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 40px rgba(99,102,241,0.3), inset 0 0 30px rgba(99,102,241,0.2);
+      overflow: hidden;
+    }
+
+    .globe::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 40%, rgba(255,255,255,0.1) 0%, transparent 50%);
+    }
+
+    .globe-line {
+      position: absolute;
+      border: 1px solid rgba(129,140,248,0.2);
+      border-radius: 50%;
+    }
+
+    .globe-line:nth-child(1) { width: 100%; height: 100%; top: 0; left: 0; }
+    .globe-line:nth-child(2) { width: 60%; height: 100%; top: 0; left: 20%; }
+    .globe-line:nth-child(3) { width: 30%; height: 100%; top: 0; left: 35%; }
+    .globe-line:nth-child(4) { width: 100%; height: 1px; top: 33%; left: 0; border-radius: 0; border: none; background: rgba(129,140,248,0.15); }
+    .globe-line:nth-child(5) { width: 100%; height: 1px; top: 50%; left: 0; border-radius: 0; border: none; background: rgba(129,140,248,0.2); }
+    .globe-line:nth-child(6) { width: 100%; height: 1px; top: 67%; left: 0; border-radius: 0; border: none; background: rgba(129,140,248,0.15); }
+
+    .orbit-flags {
+      position: absolute;
+      inset: 0;
+      animation: spin 20s linear infinite;
+    }
+
+    .orbit-flag {
+      position: absolute;
+      font-size: 1.4rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .orbit-flag:nth-child(1) { top: 0; left: 50%; transform: translateX(-50%); }
+    .orbit-flag:nth-child(2) { top: 50%; right: 0; transform: translateY(-50%); }
+    .orbit-flag:nth-child(3) { bottom: 0; left: 50%; transform: translateX(-50%); }
+    .orbit-flag:nth-child(4) { top: 50%; left: 0; transform: translateY(-50%); }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Keep orbit flags upright */
+    .orbit-flags .orbit-flag { animation: counter-spin 20s linear infinite; }
+    @keyframes counter-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(-360deg); }
+    }
+    .orbit-flag:nth-child(1) { top: 0; left: 50%; }
+    .orbit-flag:nth-child(2) { top: 50%; right: 0; left: auto; }
+    .orbit-flag:nth-child(3) { bottom: 0; top: auto; left: 50%; }
+    .orbit-flag:nth-child(4) { top: 50%; left: 0; }
+
+    .start-screen h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #818cf8, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .start-screen p {
+      color: #888;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+    }
+
+    .mode-section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #555;
+      margin-bottom: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .level-cards { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* ─── Revision Screen ─── */
+    .revision-screen { display: none; }
+
+    .revision-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .revision-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .revision-search {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      background: #151528;
+      color: #e8e8f0;
+      font-size: 0.9rem;
+      outline: none;
+      margin-bottom: 0.75rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .revision-search:focus { border-color: #818cf8; }
+
+    .revision-search-wrap {
+      position: relative;
+    }
+
+    .revision-search-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: #555;
+      pointer-events: none;
+    }
+
+    .revision-filters {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .rev-filter-btn {
+      padding: 6px 14px;
+      border: 1px solid #2a2a4a;
+      border-radius: 20px;
+      background: #151528;
+      color: #888;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .rev-filter-btn:hover { border-color: #818cf8; color: #c4c4f0; }
+    .rev-filter-btn.active { border-color: #818cf8; background: rgba(99,102,241,0.15); color: #818cf8; }
+
+    .revision-count {
+      color: #555;
+      font-size: 0.8rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .revision-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      max-height: 65vh;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .revision-grid::-webkit-scrollbar { width: 6px; }
+    .revision-grid::-webkit-scrollbar-track { background: transparent; }
+    .revision-grid::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 3px; }
+
+    .rev-card {
+      background: #151528;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 12px 10px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .rev-card:hover {
+      border-color: #818cf8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .rev-card img {
+      width: 80px;
+      height: auto;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      margin-bottom: 8px;
+    }
+
+    .rev-card-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      line-height: 1.2;
+      color: #c8c8e0;
+    }
+
+    .rev-card-code {
+      font-size: 0.65rem;
+      color: #555;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+
+    .rev-card-level {
+      display: inline-block;
+      font-size: 0.6rem;
+      padding: 1px 6px;
+      border-radius: 8px;
+      margin-top: 4px;
+    }
+
+    .rev-card-level.easy { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .rev-card-level.medium { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .rev-card-level.hard { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    .speak-btn {
+      background: rgba(99,102,241,0.1);
+      border: 1px solid #3a3a5a;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #818cf8;
+      transition: all 0.2s;
+      margin-top: 8px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .speak-btn svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    .speak-btn:hover {
+      color: #a5b4fc;
+      border-color: #818cf8;
+      background: rgba(99,102,241,0.2);
+      transform: scale(1.1);
+    }
+
+    .speak-btn.speaking {
+      color: #a5b4fc;
+      border-color: #818cf8;
+      background: rgba(99,102,241,0.2);
+      animation: pulse-speak 0.8s ease infinite;
+    }
+
+    @keyframes pulse-speak {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.3); }
+      50% { box-shadow: 0 0 0 6px rgba(99,102,241,0); }
+    }
+
+    .no-results {
+      text-align: center;
+      color: #555;
+      padding: 3rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    .level-card {
+      background: #151528;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      text-align: left;
+    }
+
+    .level-card:hover {
+      transform: translateY(-3px);
+      border-color: #818cf8;
+      box-shadow: 0 8px 30px rgba(99,102,241,0.15);
+    }
+
+    .level-icon {
+      font-size: 2.5rem;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      flex-shrink: 0;
+    }
+
+    .level-card:nth-child(1) .level-icon { background: rgba(34,197,94,0.15); }
+    .level-card:nth-child(2) .level-icon { background: rgba(251,191,36,0.15); }
+    .level-card:nth-child(3) .level-icon { background: rgba(239,68,68,0.15); }
+
+    .level-info h3 { font-size: 1.2rem; margin-bottom: 0.25rem; }
+    .level-info p { color: #777; font-size: 0.85rem; margin: 0; }
+    .level-count { color: #818cf8; font-size: 0.8rem; font-weight: 600; margin-top: 4px; }
+
+    /* Game Screen */
+    .game-screen { display: none; }
+
+    .game-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .back-btn, .quit-btn {
+      background: none;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      padding: 6px 14px;
+      color: #888;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-family: inherit;
+    }
+
+    .back-btn:hover { border-color: #818cf8; color: #818cf8; }
+    .quit-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .lives { display: flex; gap: 6px; }
+
+    .heart {
+      font-size: 1.5rem;
+      transition: all 0.3s;
+    }
+
+    .heart.lost {
+      opacity: 0.2;
+      transform: scale(0.8);
+    }
+
+    .score-display {
+      background: #151528;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid #2a2a4a;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #1a1a35;
+      border-radius: 3px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #818cf8, #ec4899);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .flag-container {
+      background: #151528;
+      border: 1px solid #2a2a4a;
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .flag-container img {
+      max-width: 280px;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      transition: opacity 0.3s;
+    }
+
+    .question-text {
+      text-align: center;
+      font-size: 1.1rem;
+      color: #aaa;
+      margin-bottom: 1.2rem;
+    }
+
+    .options { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .option-btn {
+      background: #151528;
+      border: 2px solid #2a2a4a;
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+      color: #e8e8f0;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.25s;
+      text-align: left;
+      font-family: inherit;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: #818cf8;
+      background: #1a1a40;
+    }
+
+    .option-btn.correct {
+      border-color: #22c55e;
+      background: rgba(34,197,94,0.15);
+      color: #22c55e;
+    }
+
+    .option-btn.wrong {
+      border-color: #ef4444;
+      background: rgba(239,68,68,0.15);
+      color: #ef4444;
+    }
+
+    .option-btn:disabled { cursor: default; }
+
+    /* Confirm Quit Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-box {
+      background: #151528;
+      border: 1px solid #2a2a4a;
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 380px;
+      width: 90%;
+    }
+
+    .modal-box h3 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+    .modal-box p { color: #888; margin-bottom: 1.5rem; font-size: 0.95rem; }
+
+    .modal-btns { display: flex; gap: 0.75rem; justify-content: center; }
+
+    .modal-btns .btn { padding: 0.7rem 1.5rem; font-size: 0.95rem; }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: none;
+    }
+
+    .btn-danger:hover { box-shadow: 0 6px 20px rgba(239,68,68,0.3); }
+
+    /* End Screen */
+    .end-screen {
+      display: none;
+      text-align: center;
+    }
+
+    .end-screen h2 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .final-score {
+      font-size: 4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #818cf8, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 1rem 0;
+    }
+
+    .end-screen .subtitle {
+      color: #888;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      border: none;
+      border-radius: 14px;
+      padding: 1rem 2.5rem;
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: inherit;
+      margin: 0.4rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99,102,241,0.3);
+    }
+
+    .btn-secondary {
+      background: #151528;
+      border: 1px solid #2a2a4a;
+    }
+
+    .btn-secondary:hover {
+      border-color: #818cf8;
+      box-shadow: 0 6px 20px rgba(99,102,241,0.1);
+    }
+
+    .level-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .level-badge.easy { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .level-badge.medium { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .level-badge.hard { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    .shake { animation: shake 0.4s ease; }
+
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .pop { animation: pop 0.3s ease; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Start Screen -->
+  <div class="start-screen" id="startScreen">
+    <div class="hero-visual">
+      <div class="globe">
+        <div class="globe-line"></div>
+        <div class="globe-line"></div>
+        <div class="globe-line"></div>
+        <div class="globe-line"></div>
+        <div class="globe-line"></div>
+        <div class="globe-line"></div>
+      </div>
+      <div class="orbit-flags">
+        <span class="orbit-flag">🇯🇵</span>
+        <span class="orbit-flag">🇧🇷</span>
+        <span class="orbit-flag">🇰🇪</span>
+        <span class="orbit-flag">🇫🇷</span>
+      </div>
+    </div>
+    <h1>Flags Quiz</h1>
+    <p>How well do you know the world's flags?</p>
+
+    <p class="mode-section-title">Quiz Mode</p>
+    <div class="level-cards">
+      <div class="level-card" onclick="startGame('easy')">
+        <div class="level-icon">🟢</div>
+        <div class="level-info">
+          <h3>Easy</h3>
+          <p>Well-known countries — USA, Japan, France, Brazil...</p>
+          <p class="level-count" id="easyCount"></p>
+        </div>
+      </div>
+      <div class="level-card" onclick="startGame('medium')">
+        <div class="level-icon">🟡</div>
+        <div class="level-info">
+          <h3>Medium</h3>
+          <p>Less familiar — Latvia, Bhutan, Suriname, Moldova...</p>
+          <p class="level-count" id="mediumCount"></p>
+        </div>
+      </div>
+      <div class="level-card" onclick="startGame('hard')">
+        <div class="level-icon">🔴</div>
+        <div class="level-info">
+          <h3>Hard</h3>
+          <p>Obscure flags — Comoros, Palau, Tuvalu, Kiribati...</p>
+          <p class="level-count" id="hardCount"></p>
+        </div>
+      </div>
+    </div>
+
+    <p class="mode-section-title" style="margin-top: 1.5rem;">Study Mode</p>
+    <div class="level-cards">
+      <div class="level-card" onclick="openRevision()">
+        <div class="level-icon" style="background: rgba(99,102,241,0.15);">📖</div>
+        <div class="level-info">
+          <h3>Revision</h3>
+          <p>Browse all flags and their country names</p>
+          <p class="level-count" id="totalCount"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revision Screen -->
+  <div class="revision-screen" id="revisionScreen">
+    <div class="revision-top-bar">
+      <button class="back-btn" onclick="closeRevision()">&#8592; Back</button>
+      <span class="revision-title">All Flags</span>
+      <span></span>
+    </div>
+    <div class="revision-search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" class="revision-search" id="revSearch" placeholder="Search countries..." oninput="filterRevision()">
+    </div>
+    <div class="revision-filters" id="revFilters">
+      <button class="rev-filter-btn active" data-level="all" onclick="setRevFilter('all', this)">All</button>
+      <button class="rev-filter-btn" data-level="easy" onclick="setRevFilter('easy', this)">Easy</button>
+      <button class="rev-filter-btn" data-level="medium" onclick="setRevFilter('medium', this)">Medium</button>
+      <button class="rev-filter-btn" data-level="hard" onclick="setRevFilter('hard', this)">Hard</button>
+    </div>
+    <p class="revision-count" id="revCount"></p>
+    <div class="revision-grid" id="revGrid"></div>
+  </div>
+
+  <!-- Game Screen -->
+  <div class="game-screen" id="gameScreen">
+    <div class="game-top-bar">
+      <button class="back-btn" onclick="confirmQuit()">&#8592; Back</button>
+      <span class="level-badge" id="levelBadge"></span>
+      <button class="quit-btn" onclick="confirmQuit()">Quit</button>
+    </div>
+    <div class="game-header">
+      <div class="lives" id="lives"></div>
+      <div class="score-display" id="scoreDisplay">0 / 0</div>
+    </div>
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="flag-container" id="flagContainer">
+      <img id="flagImg" src="" alt="Country flag">
+    </div>
+    <p class="question-text">Which country does this flag belong to?</p>
+    <div class="options" id="options"></div>
+  </div>
+
+  <!-- Confirm Quit Modal -->
+  <div class="modal-overlay" id="quitModal">
+    <div class="modal-box">
+      <h3>Quit Game?</h3>
+      <p>Your progress will be lost.</p>
+      <div class="modal-btns">
+        <button class="btn btn-secondary" onclick="closeQuitModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="quitGame()">Quit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Screen -->
+  <div class="end-screen" id="endScreen">
+    <h2 id="endTitle"></h2>
+    <div class="final-score" id="finalScore"></div>
+    <p class="subtitle" id="endSubtitle"></p>
+    <div>
+      <button class="btn" onclick="restartSameLevel()">Play Again</button>
+      <button class="btn btn-secondary" onclick="goHome()">Change Level</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── All Countries (every UN member + some territories, no duplicates) ───
+const countries = {
+  easy: [
+    {code:"us",name:"United States"},{code:"gb",name:"United Kingdom"},{code:"fr",name:"France"},
+    {code:"de",name:"Germany"},{code:"it",name:"Italy"},{code:"es",name:"Spain"},
+    {code:"jp",name:"Japan"},{code:"cn",name:"China"},{code:"kr",name:"South Korea"},
+    {code:"in",name:"India"},{code:"br",name:"Brazil"},{code:"ca",name:"Canada"},
+    {code:"au",name:"Australia"},{code:"ru",name:"Russia"},{code:"mx",name:"Mexico"},
+    {code:"za",name:"South Africa"},{code:"eg",name:"Egypt"},{code:"tr",name:"Turkey"},
+    {code:"ar",name:"Argentina"},{code:"se",name:"Sweden"},{code:"no",name:"Norway"},
+    {code:"nl",name:"Netherlands"},{code:"pt",name:"Portugal"},{code:"gr",name:"Greece"},
+    {code:"ch",name:"Switzerland"},{code:"ie",name:"Ireland"},{code:"pk",name:"Pakistan"},
+    {code:"ng",name:"Nigeria"},{code:"ke",name:"Kenya"},{code:"il",name:"Israel"},
+    {code:"sa",name:"Saudi Arabia"},{code:"ae",name:"United Arab Emirates"},
+    {code:"th",name:"Thailand"},{code:"vn",name:"Vietnam"},{code:"ph",name:"Philippines"},
+    {code:"id",name:"Indonesia"},{code:"my",name:"Malaysia"},{code:"nz",name:"New Zealand"},
+    {code:"co",name:"Colombia"},{code:"cl",name:"Chile"},{code:"pe",name:"Peru"},
+    {code:"at",name:"Austria"},{code:"be",name:"Belgium"},{code:"dk",name:"Denmark"},
+    {code:"fi",name:"Finland"},{code:"pl",name:"Poland"},{code:"ua",name:"Ukraine"},
+    {code:"ro",name:"Romania"},{code:"cu",name:"Cuba"},{code:"jm",name:"Jamaica"},
+    {code:"sg",name:"Singapore"},{code:"cz",name:"Czech Republic"},{code:"hu",name:"Hungary"},
+    {code:"ir",name:"Iran"},{code:"iq",name:"Iraq"},{code:"af",name:"Afghanistan"},
+    {code:"tw",name:"Taiwan"},{code:"kp",name:"North Korea"},{code:"et",name:"Ethiopia"},
+    {code:"gh",name:"Ghana"},{code:"tz",name:"Tanzania"},{code:"dz",name:"Algeria"},
+    {code:"ma",name:"Morocco"},{code:"ve",name:"Venezuela"},{code:"ec",name:"Ecuador"},
+    {code:"do",name:"Dominican Republic"}
+  ],
+  medium: [
+    {code:"lv",name:"Latvia"},{code:"lt",name:"Lithuania"},{code:"ee",name:"Estonia"},
+    {code:"hr",name:"Croatia"},{code:"si",name:"Slovenia"},{code:"sk",name:"Slovakia"},
+    {code:"bg",name:"Bulgaria"},{code:"rs",name:"Serbia"},{code:"ba",name:"Bosnia and Herzegovina"},
+    {code:"al",name:"Albania"},{code:"mk",name:"North Macedonia"},{code:"me",name:"Montenegro"},
+    {code:"cy",name:"Cyprus"},{code:"mt",name:"Malta"},{code:"is",name:"Iceland"},
+    {code:"lu",name:"Luxembourg"},{code:"md",name:"Moldova"},{code:"ge",name:"Georgia"},
+    {code:"am",name:"Armenia"},{code:"az",name:"Azerbaijan"},{code:"kz",name:"Kazakhstan"},
+    {code:"uz",name:"Uzbekistan"},{code:"tm",name:"Turkmenistan"},{code:"kg",name:"Kyrgyzstan"},
+    {code:"tj",name:"Tajikistan"},{code:"mn",name:"Mongolia"},{code:"np",name:"Nepal"},
+    {code:"bd",name:"Bangladesh"},{code:"lk",name:"Sri Lanka"},{code:"mm",name:"Myanmar"},
+    {code:"kh",name:"Cambodia"},{code:"la",name:"Laos"},{code:"bt",name:"Bhutan"},
+    {code:"qa",name:"Qatar"},{code:"kw",name:"Kuwait"},{code:"bh",name:"Bahrain"},
+    {code:"om",name:"Oman"},{code:"jo",name:"Jordan"},{code:"lb",name:"Lebanon"},
+    {code:"sy",name:"Syria"},{code:"ye",name:"Yemen"},{code:"tn",name:"Tunisia"},
+    {code:"ly",name:"Libya"},{code:"sd",name:"Sudan"},{code:"mg",name:"Madagascar"},
+    {code:"mz",name:"Mozambique"},{code:"zw",name:"Zimbabwe"},{code:"bw",name:"Botswana"},
+    {code:"na",name:"Namibia"},{code:"zm",name:"Zambia"},{code:"sn",name:"Senegal"},
+    {code:"ci",name:"Ivory Coast"},{code:"cm",name:"Cameroon"},{code:"ug",name:"Uganda"},
+    {code:"sr",name:"Suriname"},{code:"gy",name:"Guyana"},{code:"py",name:"Paraguay"},
+    {code:"uy",name:"Uruguay"},{code:"bo",name:"Bolivia"},{code:"pa",name:"Panama"},
+    {code:"cr",name:"Costa Rica"},{code:"gt",name:"Guatemala"},{code:"hn",name:"Honduras"},
+    {code:"sv",name:"El Salvador"},{code:"ni",name:"Nicaragua"},{code:"ht",name:"Haiti"},
+    {code:"tt",name:"Trinidad and Tobago"},{code:"bs",name:"Bahamas"},{code:"bb",name:"Barbados"},
+    {code:"bz",name:"Belize"},{code:"fj",name:"Fiji"},{code:"pg",name:"Papua New Guinea"},
+    {code:"ps",name:"Palestine"},{code:"xk",name:"Kosovo"},{code:"ao",name:"Angola"},
+    {code:"rw",name:"Rwanda"},{code:"ss",name:"South Sudan"}
+  ],
+  hard: [
+    {code:"km",name:"Comoros"},{code:"pw",name:"Palau"},{code:"tv",name:"Tuvalu"},
+    {code:"ki",name:"Kiribati"},{code:"nr",name:"Nauru"},{code:"mh",name:"Marshall Islands"},
+    {code:"fm",name:"Micronesia"},{code:"to",name:"Tonga"},{code:"ws",name:"Samoa"},
+    {code:"vu",name:"Vanuatu"},{code:"sb",name:"Solomon Islands"},{code:"tl",name:"Timor-Leste"},
+    {code:"bn",name:"Brunei"},{code:"mv",name:"Maldives"},{code:"sz",name:"Eswatini"},
+    {code:"ls",name:"Lesotho"},{code:"gm",name:"Gambia"},{code:"gw",name:"Guinea-Bissau"},
+    {code:"gn",name:"Guinea"},{code:"sl",name:"Sierra Leone"},{code:"lr",name:"Liberia"},
+    {code:"tg",name:"Togo"},{code:"bj",name:"Benin"},{code:"ne",name:"Niger"},
+    {code:"bf",name:"Burkina Faso"},{code:"ml",name:"Mali"},{code:"mr",name:"Mauritania"},
+    {code:"td",name:"Chad"},{code:"cf",name:"Central African Republic"},{code:"cg",name:"Republic of the Congo"},
+    {code:"cd",name:"DR Congo"},{code:"ga",name:"Gabon"},{code:"gq",name:"Equatorial Guinea"},
+    {code:"bi",name:"Burundi"},{code:"er",name:"Eritrea"},{code:"dj",name:"Djibouti"},
+    {code:"so",name:"Somalia"},{code:"mw",name:"Malawi"},{code:"mu",name:"Mauritius"},
+    {code:"sc",name:"Seychelles"},{code:"st",name:"Sao Tome and Principe"},
+    {code:"cv",name:"Cape Verde"},{code:"ag",name:"Antigua and Barbuda"},
+    {code:"dm",name:"Dominica"},{code:"gd",name:"Grenada"},{code:"kn",name:"Saint Kitts and Nevis"},
+    {code:"lc",name:"Saint Lucia"},{code:"vc",name:"Saint Vincent and the Grenadines"},
+    {code:"ad",name:"Andorra"},{code:"mc",name:"Monaco"},{code:"li",name:"Liechtenstein"},
+    {code:"sm",name:"San Marino"},{code:"va",name:"Vatican City"}
+  ]
+};
+
+// ─── Game State ───
+let currentLevel = '';
+let questions = [];
+let currentQuestion = 0;
+let score = 0;
+let lives = 3;
+let totalQuestions = 0;
+let answered = false;
+
+// ─── DOM ───
+const startScreen = document.getElementById('startScreen');
+const gameScreen = document.getElementById('gameScreen');
+const endScreen = document.getElementById('endScreen');
+const flagImg = document.getElementById('flagImg');
+const optionsDiv = document.getElementById('options');
+const livesDiv = document.getElementById('lives');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const progressBar = document.getElementById('progressBar');
+const levelBadge = document.getElementById('levelBadge');
+const flagContainer = document.getElementById('flagContainer');
+const quitModal = document.getElementById('quitModal');
+
+// Show country counts on start screen
+document.getElementById('easyCount').textContent = `${countries.easy.length} countries`;
+document.getElementById('mediumCount').textContent = `${countries.medium.length} countries`;
+document.getElementById('hardCount').textContent = `${countries.hard.length} countries`;
+document.getElementById('totalCount').textContent = `${countries.easy.length + countries.medium.length + countries.hard.length} countries`;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getAllCountries() {
+  return [...countries.easy, ...countries.medium, ...countries.hard];
+}
+
+function startGame(level) {
+  currentLevel = level;
+  currentQuestion = 0;
+  score = 0;
+  lives = 3;
+
+  // Use ALL countries in this level, shuffled
+  questions = shuffle(countries[level]);
+  totalQuestions = questions.length;
+
+  startScreen.style.display = 'none';
+  endScreen.style.display = 'none';
+  gameScreen.style.display = 'block';
+
+  levelBadge.textContent = level.charAt(0).toUpperCase() + level.slice(1);
+  levelBadge.className = 'level-badge ' + level;
+
+  updateLives();
+  loadQuestion();
+}
+
+function loadQuestion() {
+  answered = false;
+  const q = questions[currentQuestion];
+
+  scoreDisplay.textContent = `${score} / ${totalQuestions}`;
+  progressBar.style.width = `${(currentQuestion / totalQuestions) * 100}%`;
+
+  flagImg.style.opacity = '0';
+  flagImg.src = `https://flagcdn.com/w320/${q.code}.png`;
+  flagImg.onload = () => { flagImg.style.opacity = '1'; };
+  flagImg.onerror = () => {
+    flagImg.src = `https://flagcdn.com/w320/${q.code.toLowerCase()}.png`;
+    flagImg.style.opacity = '1';
+  };
+
+  // 1 correct + 3 wrong from ALL countries (not just same level)
+  const allCountries = getAllCountries();
+  const wrongPool = allCountries.filter(c => c.name !== q.name);
+  const wrongAnswers = shuffle(wrongPool).slice(0, 3);
+  const options = shuffle([q, ...wrongAnswers]);
+
+  optionsDiv.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt.name;
+    btn.onclick = () => checkAnswer(btn, opt.name, q.name);
+    optionsDiv.appendChild(btn);
+  });
+}
+
+function checkAnswer(btn, selected, correct) {
+  if (answered) return;
+  answered = true;
+
+  const buttons = optionsDiv.querySelectorAll('.option-btn');
+  buttons.forEach(b => b.disabled = true);
+
+  if (selected === correct) {
+    btn.classList.add('correct');
+    flagContainer.classList.add('pop');
+    score++;
+  } else {
+    btn.classList.add('wrong');
+    buttons.forEach(b => {
+      if (b.textContent === correct) b.classList.add('correct');
+    });
+    lives--;
+    updateLives();
+    flagContainer.classList.add('shake');
+  }
+
+  setTimeout(() => {
+    flagContainer.classList.remove('pop', 'shake');
+  }, 400);
+
+  setTimeout(() => {
+    currentQuestion++;
+    if (lives <= 0) {
+      endGame(false);
+    } else if (currentQuestion >= totalQuestions) {
+      endGame(true);
+    } else {
+      loadQuestion();
+    }
+  }, 1200);
+}
+
+function updateLives() {
+  livesDiv.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const span = document.createElement('span');
+    span.className = 'heart' + (i >= lives ? ' lost' : '');
+    span.textContent = '❤️';
+    livesDiv.appendChild(span);
+  }
+}
+
+function endGame(completed) {
+  gameScreen.style.display = 'none';
+  endScreen.style.display = 'block';
+
+  const title = document.getElementById('endTitle');
+  const finalScore = document.getElementById('finalScore');
+  const subtitle = document.getElementById('endSubtitle');
+
+  finalScore.textContent = `${score} / ${totalQuestions}`;
+
+  if (!completed) {
+    title.textContent = 'Game Over!';
+    subtitle.textContent = `You answered ${currentQuestion} of ${totalQuestions} on ${currentLevel} mode. Keep practicing!`;
+  } else if (score === totalQuestions) {
+    title.textContent = 'Perfect Score!';
+    subtitle.textContent = `Flawless on ${currentLevel} mode! You're a flag expert!`;
+  } else if (score >= totalQuestions * 0.8) {
+    title.textContent = 'Great Job!';
+    subtitle.textContent = `Impressive performance on ${currentLevel} mode!`;
+  } else if (score >= totalQuestions * 0.5) {
+    title.textContent = 'Not Bad!';
+    subtitle.textContent = `Decent run on ${currentLevel} mode. Try again?`;
+  } else {
+    title.textContent = 'Keep Learning!';
+    subtitle.textContent = `${currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1)} mode is tough. Practice makes perfect!`;
+  }
+}
+
+// ─── Quit / Back ───
+function confirmQuit() {
+  quitModal.classList.add('active');
+}
+
+function closeQuitModal() {
+  quitModal.classList.remove('active');
+}
+
+function quitGame() {
+  quitModal.classList.remove('active');
+  goHome();
+}
+
+function restartSameLevel() {
+  startGame(currentLevel);
+}
+
+function goHome() {
+  gameScreen.style.display = 'none';
+  endScreen.style.display = 'none';
+  revisionScreen.style.display = 'none';
+  startScreen.style.display = 'block';
+}
+
+// ─── Revision Mode ───
+const revisionScreen = document.getElementById('revisionScreen');
+const revGrid = document.getElementById('revGrid');
+const revSearch = document.getElementById('revSearch');
+const revCount = document.getElementById('revCount');
+let revFilter = 'all';
+
+function getAllRevisionCards() {
+  const all = [];
+  for (const level of ['easy', 'medium', 'hard']) {
+    for (const c of countries[level]) {
+      all.push({ ...c, level });
+    }
+  }
+  return all.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function openRevision() {
+  startScreen.style.display = 'none';
+  revisionScreen.style.display = 'block';
+  revSearch.value = '';
+  revFilter = 'all';
+  document.querySelectorAll('.rev-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.level === 'all'));
+  renderRevision();
+  revSearch.focus();
+}
+
+function closeRevision() {
+  revisionScreen.style.display = 'none';
+  startScreen.style.display = 'block';
+}
+
+function setRevFilter(level, btn) {
+  revFilter = level;
+  document.querySelectorAll('.rev-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRevision();
+}
+
+function filterRevision() {
+  renderRevision();
+}
+
+function renderRevision() {
+  const query = revSearch.value.toLowerCase().trim();
+  let cards = getAllRevisionCards();
+
+  if (revFilter !== 'all') {
+    cards = cards.filter(c => c.level === revFilter);
+  }
+  if (query) {
+    cards = cards.filter(c => c.name.toLowerCase().includes(query) || c.code.toLowerCase().includes(query));
+  }
+
+  revCount.textContent = `${cards.length} ${cards.length === 1 ? 'country' : 'countries'}`;
+
+  if (cards.length === 0) {
+    revGrid.innerHTML = '<div class="no-results">No countries found</div>';
+    return;
+  }
+
+  revGrid.innerHTML = cards.map(c => `
+    <div class="rev-card">
+      <img src="https://flagcdn.com/w160/${c.code}.png" alt="${c.name}" loading="lazy" onerror="this.src='https://flagcdn.com/w160/${c.code.toLowerCase()}.png'">
+      <div class="rev-card-name">${c.name}</div>
+      <div class="rev-card-code">${c.code}</div>
+      <span class="rev-card-level ${c.level}">${c.level}</span>
+      <button class="speak-btn" onclick="speakCountry('${c.name.replace(/'/g, "\\'")}', this)" title="Listen to pronunciation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        </svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+// ─── Text-to-Speech ───
+let bestVoice = null;
+
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  if (voices.length === 0) return;
+
+  // Prefer high-quality voices in this order
+  const preferred = [
+    'Google UK English Female',
+    'Google UK English Male',
+    'Google US English',
+    'Microsoft Zira',
+    'Microsoft David',
+    'Samantha',        // macOS
+    'Karen',           // macOS Australian
+    'Daniel',          // macOS British
+    'Alex',            // macOS
+  ];
+
+  for (const name of preferred) {
+    const match = voices.find(v => v.name.includes(name));
+    if (match) { bestVoice = match; return; }
+  }
+
+  // Fallback: pick any English voice that isn't marked as "compact" or "espeak"
+  const english = voices.filter(v => v.lang.startsWith('en'));
+  const quality = english.find(v => !v.name.toLowerCase().includes('espeak') && !v.name.toLowerCase().includes('compact'));
+  bestVoice = quality || english[0] || voices[0];
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function speakCountry(name, btn) {
+  speechSynthesis.cancel();
+
+  const utter = new SpeechSynthesisUtterance(name);
+  utter.rate = 0.9;
+  utter.pitch = 1;
+  utter.volume = 1;
+  if (bestVoice) utter.voice = bestVoice;
+
+  // Visual feedback
+  document.querySelectorAll('.speak-btn.speaking').forEach(b => b.classList.remove('speaking'));
+  btn.classList.add('speaking');
+
+  utter.onend = () => btn.classList.remove('speaking');
+  utter.onerror = () => btn.classList.remove('speaking');
+
+  speechSynthesis.speak(utter);
+}
+
+// ─── Service Worker ───
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+Add-Type -AssemblyName System.Drawing
+$img = [System.Drawing.Image]::FromFile("C:\Users\Mano\OneDrive\Desktop\MAIN2025\WEB DEVELOPMENT\flags-game\3626838.png")
+$bmp = New-Object System.Drawing.Bitmap($img, 256, 256)
+$icon = [System.Drawing.Icon]::FromHandle($bmp.GetHicon())
+$fs = [System.IO.File]::Create("C:\Users\Mano\OneDrive\Desktop\MAIN2025\WEB DEVELOPMENT\flags-game\icon.ico")
+$icon.Save($fs)
+$fs.Close()
+$icon.Dispose()
+$bmp.Dispose()
+$img.Dispose()
