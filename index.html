@@ -1234,7 +1234,10 @@ function scoreVoice(v) {
   if (n.includes('natural')) s += 35;
 
   // Known high-quality voices by name
+  // Siri Voice 1 is top priority per user preference
   const quality = {
+    'siri (voice 1)': 200, 'siri voice 1': 200, 'siri female': 195,
+    'siri': 190,
     'google uk english female': 90, 'google uk english male': 88,
     'microsoft libby online': 85, 'microsoft sonia online': 85,
     'microsoft libby': 80, 'microsoft sonia': 80,
