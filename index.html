@@ -1214,91 +1214,24 @@ function renderRevision() {
   `).join('');
 }
 
-// ─── Text-to-Speech ───
-let bestVoice = null;
-
-function scoreVoice(v) {
-  const n = v.name.toLowerCase();
-  const l = (v.lang || '').replace('_', '-').toLowerCase();
-  let s = 0;
-
-  // Disqualify bad voices
-  if (n.includes('espeak') || n.includes('compact') || n.includes('pico')) return -1;
-
-  // British accent boost
-  if (l.startsWith('en-gb')) s += 50;
-
-  // Enhanced/Premium/Natural markers (mobile high-quality voices)
-  if (n.includes('enhanced')) s += 40;
-  if (n.includes('premium')) s += 40;
-  if (n.includes('natural')) s += 35;
-
-  // Known high-quality voices by name
-  // Siri Voice 1 is top priority per user preference
-  const quality = {
-    'siri (voice 1)': 200, 'siri voice 1': 200, 'siri female': 195,
-    'siri': 190,
-    'google uk english female': 90, 'google uk english male': 88,
-    'microsoft libby online': 85, 'microsoft sonia online': 85,
-    'microsoft libby': 80, 'microsoft sonia': 80,
-    'martha': 75, 'daniel': 70, 'kate': 70, 'serena': 68,
-    'samantha': 60, 'karen': 58, 'fiona': 65, 'moira': 64,
-    'google us english': 45,
-  };
-  for (const [key, score] of Object.entries(quality)) {
-    if (n.includes(key)) { s += score; break; }
-  }
-
-  // Any English voice gets base points
-  if (l.startsWith('en')) s += 10;
-
-  // Prefer non-local (network) voices on mobile — they're higher quality
-  if (!v.localService) s += 15;
-
-  return s;
-}
-
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  if (voices.length === 0) return;
-
-  const english = voices.filter(v => {
-    const l = (v.lang || '').replace('_', '-').toLowerCase();
-    return l.startsWith('en');
-  });
-
-  if (english.length === 0) { bestVoice = voices[0]; return; }
-
-  const scored = english.map(v => ({ v, s: scoreVoice(v) })).filter(x => x.s >= 0);
-  scored.sort((a, b) => b.s - a.s);
-  bestVoice = scored.length > 0 ? scored[0].v : english[0];
-}
-
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-// Mobile voices load late — retry after a delay
-setTimeout(loadVoices, 500);
-setTimeout(loadVoices, 2000);
+// ─── Text-to-Speech (Google Translate audio) ───
+let ttsAudio = null;
 
 function speakCountry(name, btn) {
-  if (!bestVoice) loadVoices(); // last-chance reload
-  speechSynthesis.cancel();
-
-  const utter = new SpeechSynthesisUtterance(name);
-  utter.lang = bestVoice && bestVoice.lang.startsWith('en-GB') ? 'en-GB' : 'en-GB';
-  utter.rate = 0.85;
-  utter.pitch = 1.0;
-  utter.volume = 1;
-  if (bestVoice) utter.voice = bestVoice;
+  // Stop any currently playing audio
+  if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
 
   // Visual feedback
   document.querySelectorAll('.speak-btn.speaking').forEach(b => b.classList.remove('speaking'));
   btn.classList.add('speaking');
 
-  utter.onend = () => btn.classList.remove('speaking');
-  utter.onerror = () => btn.classList.remove('speaking');
-
-  speechSynthesis.speak(utter);
+  const encoded = encodeURIComponent(name);
+  ttsAudio = new Audio(
+    `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q=${encoded}`
+  );
+  ttsAudio.onended = () => btn.classList.remove('speaking');
+  ttsAudio.onerror = () => btn.classList.remove('speaking');
+  ttsAudio.play().catch(() => btn.classList.remove('speaking'));
 }
 
 // ─── Service Worker ───
