@@ -1215,46 +1215,68 @@ function renderRevision() {
 }
 
 // ─── Text-to-Speech ───
-let bestVoice = null;
+// Persistent audio element — created once on first tap to satisfy iOS autoplay
+let ttsAudio = null;
 
-function loadVoices() {
-  const voices = speechSynthesis.getVoices();
-  if (voices.length === 0) return;
-
-  const en = voices.filter(v => (v.lang || '').replace('_', '-').toLowerCase().startsWith('en'));
-  if (en.length === 0) { bestVoice = voices[0]; return; }
-
-  // Prefer Google UK English Female > any en-GB > any English
-  const gb = en.filter(v => (v.lang || '').replace('_', '-').toLowerCase().startsWith('en-gb'));
-  const lowQ = n => n.toLowerCase().includes('espeak') || n.toLowerCase().includes('compact');
-
-  bestVoice = en.find(v => v.name.includes('Google UK English Female'))
-    || en.find(v => v.name.includes('Google UK English'))
-    || gb.find(v => !lowQ(v.name))
-    || en.find(v => !lowQ(v.name))
-    || en[0];
+function getTTSAudio() {
+  if (!ttsAudio) {
+    ttsAudio = new Audio();
+    ttsAudio.volume = 1;
+  }
+  return ttsAudio;
 }
 
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
 function speakCountry(name, btn) {
+  const audio = getTTSAudio();
+  audio.pause();
+  audio.currentTime = 0;
+
+  document.querySelectorAll('.speak-btn.speaking').forEach(b => b.classList.remove('speaking'));
+  btn.classList.add('speaking');
+
+  const done = () => btn.classList.remove('speaking');
+
+  // Use Google Translate TTS — natural voice, same on all devices
+  const encoded = encodeURIComponent(name);
+  audio.src = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q=${encoded}`;
+  audio.onended = done;
+  audio.onerror = () => {
+    // If Google TTS fails, fall back to browser speechSynthesis
+    fallbackSpeak(name, btn, done);
+  };
+  audio.play().catch(() => {
+    fallbackSpeak(name, btn, done);
+  });
+}
+
+// Browser speechSynthesis fallback
+let bestVoice = null;
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return;
+  const en = voices.filter(v => (v.lang || '').replace('_', '-').toLowerCase().startsWith('en'));
+  const gb = en.filter(v => (v.lang || '').replace('_', '-').toLowerCase().startsWith('en-gb'));
+  const ok = n => !n.toLowerCase().includes('espeak') && !n.toLowerCase().includes('compact');
+  bestVoice = en.find(v => v.name.includes('Google UK English Female'))
+    || en.find(v => v.name.includes('Google UK English'))
+    || gb.find(v => ok(v.name)) || en.find(v => ok(v.name)) || en[0] || voices[0];
+}
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
+}
+
+function fallbackSpeak(name, btn, done) {
   if (!bestVoice) loadVoices();
   speechSynthesis.cancel();
-
   const utter = new SpeechSynthesisUtterance(name);
   utter.lang = 'en-GB';
   utter.rate = 0.9;
   utter.pitch = 1;
   utter.volume = 1;
   if (bestVoice) utter.voice = bestVoice;
-
-  document.querySelectorAll('.speak-btn.speaking').forEach(b => b.classList.remove('speaking'));
-  btn.classList.add('speaking');
-
-  utter.onend = () => btn.classList.remove('speaking');
-  utter.onerror = () => btn.classList.remove('speaking');
-
+  utter.onend = done;
+  utter.onerror = done;
   speechSynthesis.speak(utter);
 }
 
