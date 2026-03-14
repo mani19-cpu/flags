@@ -372,6 +372,25 @@
     .level-info p { color: #777; font-size: 0.85rem; margin: 0; }
     .level-count { color: #818cf8; font-size: 0.8rem; font-weight: 600; margin-top: 4px; }
 
+    .continue-btn {
+      display: none;
+      margin-top: 8px;
+      padding: 5px 14px;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid #818cf8;
+      border-radius: 8px;
+      color: #818cf8;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .continue-btn:hover {
+      background: rgba(99,102,241,0.3);
+      color: #a5b4fc;
+    }
+
     /* Game Screen */
     .game-screen { display: none; }
 
@@ -657,6 +676,7 @@
           <h3>Easy</h3>
           <p>Well-known countries — USA, Japan, France, Brazil...</p>
           <p class="level-count" id="easyCount"></p>
+          <button class="continue-btn" id="continue-easy" onclick="event.stopPropagation(); resumeGame('easy')">Continue</button>
         </div>
       </div>
       <div class="level-card" onclick="startGame('medium')">
@@ -665,6 +685,7 @@
           <h3>Medium</h3>
           <p>Less familiar — Latvia, Bhutan, Suriname, Moldova...</p>
           <p class="level-count" id="mediumCount"></p>
+          <button class="continue-btn" id="continue-medium" onclick="event.stopPropagation(); resumeGame('medium')">Continue</button>
         </div>
       </div>
       <div class="level-card" onclick="startGame('hard')">
@@ -673,6 +694,7 @@
           <h3>Hard</h3>
           <p>Obscure flags — Comoros, Palau, Tuvalu, Kiribati...</p>
           <p class="level-count" id="hardCount"></p>
+          <button class="continue-btn" id="continue-hard" onclick="event.stopPropagation(); resumeGame('hard')">Continue</button>
         </div>
       </div>
     </div>
@@ -863,6 +885,7 @@ document.getElementById('easyCount').textContent = `${countries.easy.length} cou
 document.getElementById('mediumCount').textContent = `${countries.medium.length} countries`;
 document.getElementById('hardCount').textContent = `${countries.hard.length} countries`;
 document.getElementById('totalCount').textContent = `${countries.easy.length + countries.medium.length + countries.hard.length} countries`;
+updateContinueButtons();
 
 function shuffle(arr) {
   const a = [...arr];
@@ -875,6 +898,50 @@ function shuffle(arr) {
 
 function getAllCountries() {
   return [...countries.easy, ...countries.medium, ...countries.hard];
+}
+
+// ─── Save / Resume Progress ───
+function saveProgress() {
+  const state = {
+    level: currentLevel,
+    questionIndex: currentQuestion,
+    score: score,
+    lives: lives,
+    totalQuestions: totalQuestions,
+    questions: questions.map(q => q.code) // save just codes to keep it small
+  };
+  localStorage.setItem('flags-progress-' + currentLevel, JSON.stringify(state));
+  updateContinueButtons();
+}
+
+function loadProgress(level) {
+  try {
+    return JSON.parse(localStorage.getItem('flags-progress-' + level));
+  } catch { return null; }
+}
+
+function clearProgress(level) {
+  localStorage.removeItem('flags-progress-' + level);
+  updateContinueButtons();
+}
+
+function findCountryByCode(code) {
+  return getAllCountries().find(c => c.code === code);
+}
+
+function updateContinueButtons() {
+  ['easy', 'medium', 'hard'].forEach(level => {
+    const btn = document.getElementById('continue-' + level);
+    const saved = loadProgress(level);
+    if (btn) {
+      if (saved && saved.questionIndex < saved.totalQuestions && saved.lives > 0) {
+        btn.style.display = 'inline-block';
+        btn.textContent = `Continue (${saved.questionIndex}/${saved.totalQuestions})`;
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+  });
 }
 
 function startGame(level) {
@@ -895,13 +962,41 @@ function startGame(level) {
   levelBadge.className = 'level-badge ' + level;
 
   updateSoundBtn();
+  clearProgress(level);
 
+  updateLives();
+  loadQuestion();
+}
+
+function resumeGame(level) {
+  const saved = loadProgress(level);
+  if (!saved) { startGame(level); return; }
+
+  currentLevel = saved.level;
+  currentQuestion = saved.questionIndex;
+  score = saved.score;
+  lives = saved.lives;
+  totalQuestions = saved.totalQuestions;
+
+  // Reconstruct questions array from saved codes
+  questions = saved.questions.map(code => findCountryByCode(code)).filter(Boolean);
+  if (questions.length === 0) { startGame(level); return; }
+
+  startScreen.style.display = 'none';
+  endScreen.style.display = 'none';
+  gameScreen.style.display = 'block';
+
+  levelBadge.textContent = level.charAt(0).toUpperCase() + level.slice(1);
+  levelBadge.className = 'level-badge ' + level;
+
+  updateSoundBtn();
   updateLives();
   loadQuestion();
 }
 
 function loadQuestion() {
   answered = false;
+  saveProgress();
   const q = questions[currentQuestion];
 
   scoreDisplay.textContent = `${score} / ${totalQuestions}`;
@@ -1049,6 +1144,7 @@ function updateLives() {
 }
 
 function endGame(completed) {
+  clearProgress(currentLevel);
   gameScreen.style.display = 'none';
   endScreen.style.display = 'block';
 
@@ -1099,6 +1195,7 @@ function goHome() {
   endScreen.style.display = 'none';
   revisionScreen.style.display = 'none';
   startScreen.style.display = 'block';
+  updateContinueButtons();
 }
 
 // ─── Revision Mode ───
@@ -1186,17 +1283,21 @@ function loadVoices() {
   const voices = speechSynthesis.getVoices();
   if (voices.length === 0) return;
 
-  // Prefer high-quality voices in this order
+  // Strongly prefer British English voices for natural pronunciation
   const preferred = [
     'Google UK English Female',
     'Google UK English Male',
-    'Google US English',
-    'Microsoft Zira',
-    'Microsoft David',
-    'Samantha',        // macOS
+    'Microsoft Libby Online (Natural)',  // Edge British
+    'Microsoft Sonia Online (Natural)',  // Edge British
+    'Microsoft Libby',
+    'Microsoft Sonia',
+    'Martha',          // iOS 17+ British
+    'Daniel',          // macOS/iOS British
+    'Kate',            // macOS British
+    'Serena',          // macOS British
+    'Samantha',        // macOS/iOS (high quality fallback)
     'Karen',           // macOS Australian
-    'Daniel',          // macOS British
-    'Alex',            // macOS
+    'Google US English',
   ];
 
   for (const name of preferred) {
@@ -1204,9 +1305,14 @@ function loadVoices() {
     if (match) { bestVoice = match; return; }
   }
 
-  // Fallback: pick any English voice that isn't marked as "compact" or "espeak"
+  // Fallback: prefer en-GB voices, then any quality English voice
+  const british = voices.filter(v => v.lang.startsWith('en-GB') || v.lang === 'en_GB');
+  const lowQ = s => s.toLowerCase().includes('espeak') || s.toLowerCase().includes('compact');
+  const qualityBritish = british.find(v => !lowQ(v.name));
+  if (qualityBritish) { bestVoice = qualityBritish; return; }
+
   const english = voices.filter(v => v.lang.startsWith('en'));
-  const quality = english.find(v => !v.name.toLowerCase().includes('espeak') && !v.name.toLowerCase().includes('compact'));
+  const quality = english.find(v => !lowQ(v.name));
   bestVoice = quality || english[0] || voices[0];
 }
 
@@ -1217,8 +1323,9 @@ function speakCountry(name, btn) {
   speechSynthesis.cancel();
 
   const utter = new SpeechSynthesisUtterance(name);
+  utter.lang = 'en-GB';
   utter.rate = 0.9;
-  utter.pitch = 1;
+  utter.pitch = 1.05;
   utter.volume = 1;
   if (bestVoice) utter.voice = bestVoice;
 
