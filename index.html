@@ -1217,53 +1217,74 @@ function renderRevision() {
 // ─── Text-to-Speech ───
 let bestVoice = null;
 
+function scoreVoice(v) {
+  const n = v.name.toLowerCase();
+  const l = (v.lang || '').replace('_', '-').toLowerCase();
+  let s = 0;
+
+  // Disqualify bad voices
+  if (n.includes('espeak') || n.includes('compact') || n.includes('pico')) return -1;
+
+  // British accent boost
+  if (l.startsWith('en-gb')) s += 50;
+
+  // Enhanced/Premium/Natural markers (mobile high-quality voices)
+  if (n.includes('enhanced')) s += 40;
+  if (n.includes('premium')) s += 40;
+  if (n.includes('natural')) s += 35;
+
+  // Known high-quality voices by name
+  const quality = {
+    'google uk english female': 90, 'google uk english male': 88,
+    'microsoft libby online': 85, 'microsoft sonia online': 85,
+    'microsoft libby': 80, 'microsoft sonia': 80,
+    'martha': 75, 'daniel': 70, 'kate': 70, 'serena': 68,
+    'samantha': 60, 'karen': 58, 'fiona': 65, 'moira': 64,
+    'google us english': 45,
+  };
+  for (const [key, score] of Object.entries(quality)) {
+    if (n.includes(key)) { s += score; break; }
+  }
+
+  // Any English voice gets base points
+  if (l.startsWith('en')) s += 10;
+
+  // Prefer non-local (network) voices on mobile — they're higher quality
+  if (!v.localService) s += 15;
+
+  return s;
+}
+
 function loadVoices() {
   const voices = speechSynthesis.getVoices();
   if (voices.length === 0) return;
 
-  // Strongly prefer British English voices for natural pronunciation
-  const preferred = [
-    'Google UK English Female',
-    'Google UK English Male',
-    'Microsoft Libby Online (Natural)',  // Edge British
-    'Microsoft Sonia Online (Natural)',  // Edge British
-    'Microsoft Libby',
-    'Microsoft Sonia',
-    'Martha',          // iOS 17+ British
-    'Daniel',          // macOS/iOS British
-    'Kate',            // macOS British
-    'Serena',          // macOS British
-    'Samantha',        // macOS/iOS (high quality fallback)
-    'Karen',           // macOS Australian
-    'Google US English',
-  ];
+  const english = voices.filter(v => {
+    const l = (v.lang || '').replace('_', '-').toLowerCase();
+    return l.startsWith('en');
+  });
 
-  for (const name of preferred) {
-    const match = voices.find(v => v.name.includes(name));
-    if (match) { bestVoice = match; return; }
-  }
+  if (english.length === 0) { bestVoice = voices[0]; return; }
 
-  // Fallback: prefer en-GB voices, then any quality English voice
-  const british = voices.filter(v => v.lang.startsWith('en-GB') || v.lang === 'en_GB');
-  const lowQ = s => s.toLowerCase().includes('espeak') || s.toLowerCase().includes('compact');
-  const qualityBritish = british.find(v => !lowQ(v.name));
-  if (qualityBritish) { bestVoice = qualityBritish; return; }
-
-  const english = voices.filter(v => v.lang.startsWith('en'));
-  const quality = english.find(v => !lowQ(v.name));
-  bestVoice = quality || english[0] || voices[0];
+  const scored = english.map(v => ({ v, s: scoreVoice(v) })).filter(x => x.s >= 0);
+  scored.sort((a, b) => b.s - a.s);
+  bestVoice = scored.length > 0 ? scored[0].v : english[0];
 }
 
 speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
+// Mobile voices load late — retry after a delay
+setTimeout(loadVoices, 500);
+setTimeout(loadVoices, 2000);
 
 function speakCountry(name, btn) {
+  if (!bestVoice) loadVoices(); // last-chance reload
   speechSynthesis.cancel();
 
   const utter = new SpeechSynthesisUtterance(name);
-  utter.lang = 'en-GB';
-  utter.rate = 0.9;
-  utter.pitch = 1.05;
+  utter.lang = bestVoice && bestVoice.lang.startsWith('en-GB') ? 'en-GB' : 'en-GB';
+  utter.rate = 0.85;
+  utter.pitch = 1.0;
   utter.volume = 1;
   if (bestVoice) utter.voice = bestVoice;
 
