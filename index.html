@@ -1215,63 +1215,47 @@ function renderRevision() {
 }
 
 // ─── Text-to-Speech ───
-let ttsAudio = null;
+let bestVoice = null;
 
-// Fallback: best browser voice for when Google TTS fails (e.g. iOS blocking)
-let fallbackVoice = null;
-function loadFallbackVoice() {
+function loadVoices() {
   const voices = speechSynthesis.getVoices();
-  if (!voices.length) return;
-  const en = voices.filter(v => (v.lang || '').replace('_','-').toLowerCase().startsWith('en'));
-  // Prefer Google UK > any en-GB > any English
-  const gb = en.filter(v => (v.lang || '').replace('_','-').toLowerCase().startsWith('en-gb'));
-  fallbackVoice = en.find(v => v.name.includes('Google UK English Female'))
+  if (voices.length === 0) return;
+
+  const en = voices.filter(v => (v.lang || '').replace('_', '-').toLowerCase().startsWith('en'));
+  if (en.length === 0) { bestVoice = voices[0]; return; }
+
+  // Prefer Google UK English Female > any en-GB > any English
+  const gb = en.filter(v => (v.lang || '').replace('_', '-').toLowerCase().startsWith('en-gb'));
+  const lowQ = n => n.toLowerCase().includes('espeak') || n.toLowerCase().includes('compact');
+
+  bestVoice = en.find(v => v.name.includes('Google UK English Female'))
     || en.find(v => v.name.includes('Google UK English'))
-    || gb.find(v => !v.name.toLowerCase().includes('espeak'))
-    || en.find(v => !v.name.toLowerCase().includes('espeak'))
-    || en[0] || voices[0];
-}
-if (typeof speechSynthesis !== 'undefined') {
-  speechSynthesis.onvoiceschanged = loadFallbackVoice;
-  loadFallbackVoice();
+    || gb.find(v => !lowQ(v.name))
+    || en.find(v => !lowQ(v.name))
+    || en[0];
 }
 
-function speakWithBrowser(name, btn) {
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function speakCountry(name, btn) {
+  if (!bestVoice) loadVoices();
   speechSynthesis.cancel();
+
   const utter = new SpeechSynthesisUtterance(name);
   utter.lang = 'en-GB';
   utter.rate = 0.9;
-  utter.pitch = 1.0;
+  utter.pitch = 1;
   utter.volume = 1;
-  if (fallbackVoice) utter.voice = fallbackVoice;
-  utter.onend = () => btn.classList.remove('speaking');
-  utter.onerror = () => btn.classList.remove('speaking');
-  speechSynthesis.speak(utter);
-}
+  if (bestVoice) utter.voice = bestVoice;
 
-function speakCountry(name, btn) {
-  // Stop any currently playing audio
-  if (ttsAudio) { ttsAudio.pause(); ttsAudio = null; }
-  speechSynthesis.cancel();
-
-  // Visual feedback
   document.querySelectorAll('.speak-btn.speaking').forEach(b => b.classList.remove('speaking'));
   btn.classList.add('speaking');
 
-  // Try Google Translate TTS first (sounds like Google UK English Female)
-  const encoded = encodeURIComponent(name);
-  ttsAudio = new Audio(
-    `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q=${encoded}`
-  );
-  ttsAudio.onended = () => btn.classList.remove('speaking');
-  ttsAudio.onerror = () => {
-    // Google TTS blocked/failed — fall back to browser voice
-    speakWithBrowser(name, btn);
-  };
-  ttsAudio.play().catch(() => {
-    // Autoplay blocked or network error — fall back to browser voice
-    speakWithBrowser(name, btn);
-  });
+  utter.onend = () => btn.classList.remove('speaking');
+  utter.onerror = () => btn.classList.remove('speaking');
+
+  speechSynthesis.speak(utter);
 }
 
 // ─── Service Worker ───
