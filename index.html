@@ -372,59 +372,6 @@
     .level-info p { color: #777; font-size: 0.85rem; margin: 0; }
     .level-count { color: #818cf8; font-size: 0.8rem; font-weight: 600; margin-top: 4px; }
 
-    .saved-progress-section { margin-bottom: 0.5rem; }
-
-    .saved-card {
-      background: #151528;
-      border: 1px solid #818cf8;
-      border-radius: 16px;
-      padding: 1rem 1.2rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .saved-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(99,102,241,0.2);
-      background: #1a1a38;
-    }
-    .saved-card-info { flex: 1; }
-    .saved-card-info h3 { font-size: 1rem; color: #e8e8f0; margin-bottom: 2px; }
-    .saved-card-info p { font-size: 0.8rem; color: #818cf8; margin: 0; }
-    .saved-card-progress {
-      width: 60px;
-      height: 60px;
-      position: relative;
-      flex-shrink: 0;
-    }
-    .saved-card-progress svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-    .saved-card-progress circle { fill: none; stroke-width: 5; }
-    .saved-card-progress .track { stroke: #2a2a4a; }
-    .saved-card-progress .fill { stroke: #818cf8; stroke-linecap: round; transition: stroke-dashoffset 0.4s; }
-    .saved-card-pct {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #818cf8;
-    }
-    .saved-card-dismiss {
-      background: none;
-      border: none;
-      color: #555;
-      font-size: 1.2rem;
-      cursor: pointer;
-      padding: 4px 8px;
-      transition: color 0.2s;
-      flex-shrink: 0;
-    }
-    .saved-card-dismiss:hover { color: #ef4444; }
-
     /* Game Screen */
     .game-screen { display: none; }
 
@@ -702,11 +649,6 @@
     <h1>Flags Quiz</h1>
     <p>How well do you know the world's flags?</p>
 
-    <div class="saved-progress-section" id="savedProgressSection" style="display:none;">
-      <p class="mode-section-title">Saved Progress</p>
-      <div class="level-cards" id="savedProgressCards"></div>
-    </div>
-
     <p class="mode-section-title">Quiz Mode</p>
     <div class="level-cards">
       <div class="level-card" onclick="startGame('easy')">
@@ -921,7 +863,6 @@ document.getElementById('easyCount').textContent = `${countries.easy.length} cou
 document.getElementById('mediumCount').textContent = `${countries.medium.length} countries`;
 document.getElementById('hardCount').textContent = `${countries.hard.length} countries`;
 document.getElementById('totalCount').textContent = `${countries.easy.length + countries.medium.length + countries.hard.length} countries`;
-updateContinueButtons();
 
 function shuffle(arr) {
   const a = [...arr];
@@ -934,71 +875,6 @@ function shuffle(arr) {
 
 function getAllCountries() {
   return [...countries.easy, ...countries.medium, ...countries.hard];
-}
-
-// ─── Save / Resume Progress ───
-function saveProgress() {
-  const state = {
-    level: currentLevel,
-    questionIndex: currentQuestion,
-    score: score,
-    lives: lives,
-    totalQuestions: totalQuestions,
-    questions: questions.map(q => q.code) // save just codes to keep it small
-  };
-  localStorage.setItem('flags-progress-' + currentLevel, JSON.stringify(state));
-  updateContinueButtons();
-}
-
-function loadProgress(level) {
-  try {
-    return JSON.parse(localStorage.getItem('flags-progress-' + level));
-  } catch { return null; }
-}
-
-function clearProgress(level) {
-  localStorage.removeItem('flags-progress-' + level);
-  updateContinueButtons();
-}
-
-function findCountryByCode(code) {
-  return getAllCountries().find(c => c.code === code);
-}
-
-function updateContinueButtons() {
-  const section = document.getElementById('savedProgressSection');
-  const container = document.getElementById('savedProgressCards');
-  const icons = { easy: '🟢', medium: '🟡', hard: '🔴' };
-  let html = '';
-
-  ['easy', 'medium', 'hard'].forEach(level => {
-    const saved = loadProgress(level);
-    if (saved && saved.questionIndex < saved.totalQuestions && saved.lives > 0) {
-      const pct = Math.round((saved.questionIndex / saved.totalQuestions) * 100);
-      const circ = 2 * Math.PI * 24;
-      const offset = circ - (circ * pct / 100);
-      const hearts = '❤️'.repeat(saved.lives) + '<span style="opacity:0.2">❤️</span>'.repeat(3 - saved.lives);
-      html += `
-        <div class="saved-card" onclick="resumeGame('${level}')">
-          <div style="font-size:1.8rem;">${icons[level]}</div>
-          <div class="saved-card-info">
-            <h3>${level.charAt(0).toUpperCase() + level.slice(1)}</h3>
-            <p>Q${saved.questionIndex} of ${saved.totalQuestions} · Score: ${saved.score} · ${hearts}</p>
-          </div>
-          <div class="saved-card-progress">
-            <svg viewBox="0 0 54 54">
-              <circle class="track" cx="27" cy="27" r="24"/>
-              <circle class="fill" cx="27" cy="27" r="24" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
-            </svg>
-            <span class="saved-card-pct">${pct}%</span>
-          </div>
-          <button class="saved-card-dismiss" onclick="event.stopPropagation(); clearProgress('${level}')" title="Discard">&times;</button>
-        </div>`;
-    }
-  });
-
-  container.innerHTML = html;
-  section.style.display = html ? 'block' : 'none';
 }
 
 function startGame(level) {
@@ -1019,41 +895,13 @@ function startGame(level) {
   levelBadge.className = 'level-badge ' + level;
 
   updateSoundBtn();
-  clearProgress(level);
 
-  updateLives();
-  loadQuestion();
-}
-
-function resumeGame(level) {
-  const saved = loadProgress(level);
-  if (!saved) { startGame(level); return; }
-
-  currentLevel = saved.level;
-  currentQuestion = saved.questionIndex;
-  score = saved.score;
-  lives = saved.lives;
-  totalQuestions = saved.totalQuestions;
-
-  // Reconstruct questions array from saved codes
-  questions = saved.questions.map(code => findCountryByCode(code)).filter(Boolean);
-  if (questions.length === 0) { startGame(level); return; }
-
-  startScreen.style.display = 'none';
-  endScreen.style.display = 'none';
-  gameScreen.style.display = 'block';
-
-  levelBadge.textContent = level.charAt(0).toUpperCase() + level.slice(1);
-  levelBadge.className = 'level-badge ' + level;
-
-  updateSoundBtn();
   updateLives();
   loadQuestion();
 }
 
 function loadQuestion() {
   answered = false;
-  saveProgress();
   const q = questions[currentQuestion];
 
   scoreDisplay.textContent = `${score} / ${totalQuestions}`;
@@ -1201,7 +1049,6 @@ function updateLives() {
 }
 
 function endGame(completed) {
-  clearProgress(currentLevel);
   gameScreen.style.display = 'none';
   endScreen.style.display = 'block';
 
@@ -1252,7 +1099,6 @@ function goHome() {
   endScreen.style.display = 'none';
   revisionScreen.style.display = 'none';
   startScreen.style.display = 'block';
-  updateContinueButtons();
 }
 
 // ─── Revision Mode ───
